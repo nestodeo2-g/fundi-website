@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Fundi System - Find Trusted Professionals Near You</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-wrap: wrap;
+        }
+
+        .nav-brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-brand i {
+            margin-right: 10px;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-menu a {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-menu a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-logout {
+            background: #f56565;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-danger { background: #f56565; color: white; }
+        .btn-warning { background: #ed8936; color: white; }
+        .btn-info { background: #4299e1; color: white; }
+        .btn-large { padding: 12px 30px; font-size: 16px; }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        /* Auth Card */
+        .auth-card {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 50px auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Map */
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .location-btn {
+            margin-top: 10px;
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Fundi Grid */
+        .fundi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .fundi-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .fundi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .fundi-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .fundi-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .fundi-info h3 {
+            margin-bottom: 5px;
+            color: #2d3748;
+        }
+
+        .rating {
+            margin-top: 5px;
+        }
+
+        .rating i {
+            color: #fbbf24;
+            font-size: 14px;
+        }
+
+        .status-available { color: #48bb78; font-weight: 600; }
+        .status-busy { color: #ed8936; font-weight: 600; }
+        .status-offline { color: #a0aec0; font-weight: 600; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card i {
+            font-size: 40px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-card h3 {
+            font-size: 30px;
+            color: #2d3748;
+        }
+
+        /* Search Bar */
+        .search-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input,
+        .search-bar select {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-width: 150px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 550px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #a0aec0;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-pending { background: #fed7d7; color: #742a2a; }
+        .badge-accepted { background: #c6f6d5; color: #22543d; }
+        .badge-completed { background: #bee3f8; color: #2c5282; }
+        .badge-customer { background: #c6f6d5; color: #22543d; }
+        .badge-fundi { background: #fed7d7; color: #742a2a; }
+        .badge-admin { background: #feebc8; color: #744210; }
+
+        /* Alert */
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+        .alert-error { background: #fed7d7; color: #742a2a; border: 1px solid #fc8181; }
+        .alert-info { background: #bee3f8; color: #2c5282; border: 1px solid #90cdf4; }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .feature i {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .fundi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                margin: 20px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar" id="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-tools"></i> Local Fundi System
+            </div>
+            <div class="nav-menu" id="navMenu"></div>
+        </nav>
+
+        <div id="mainContent"></div>
+    </div>
+
+    <script>
+        // ==================== DATA STORAGE ====================
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let fundis = JSON.parse(localStorage.getItem('fundis')) || [];
+        let bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+        let ratings = JSON.parse(localStorage.getItem('ratings')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let currentLocation = { lat: -6.7924, lng: 39.2083 }; // Dar es Salaam default
+
+        // ==================== INITIALIZE DEMO DATA ====================
+        function initDemoData() {
+            if (users.length === 0) {
+                users = [
+                    { id: 1, username: 'customer', password: '123', fullName: 'John Customer', email: 'customer@test.com', phone: '0712345678', location: 'Dar es Salaam, Kariakoo', lat: -6.8123, lng: 39.2683, type: 'customer' },
+                    { id: 2, username: 'fundi1', password: '123', fullName: 'Fundi John', email: 'fundi1@test.com', phone: '0712345679', location: 'Dar es Salaam, Posta', lat: -6.8123, lng: 39.2783, type: 'fundi' },
+                    { id: 3, username: 'fundi2', password: '123', fullName: 'Fundi Mary', email: 'fundi2@test.com', phone: '0712345680', location: 'Dar es Salaam, Mbagala', lat: -6.8823, lng: 39.2483, type: 'fundi' },
+                    { id: 4, username: 'fundi3', password: '123', fullName: 'Fundi James', email: 'fundi3@test.com', phone: '0712345681', location: 'Dar es Salaam, Kinondoni', lat: -6.7924, lng: 39.2583, type: 'fundi' },
+                    { id: 5, username: 'admin', password: '123', fullName: 'Admin User', email: 'admin@test.com', phone: '0712345682', location: 'Dar es Salaam', lat: -6.7924, lng: 39.2083, type: 'admin' }
+                ];
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+            
+            if (fundis.length === 0) {
+                fundis = [
+                    { id: 1, userId: 2, username: 'fundi1', fullName: 'Fundi John', category: 'electrician', specialization: 'House Wiring, AC Repair, Generator', experience: 5, price: 15000, availability: 'available', bio: 'Expert electrician with 5 years experience. I do house wiring, AC installation and repair, generator maintenance.', location: 'Dar es Salaam, Posta', lat: -6.8123, lng: 39.2783, rating: 4.5, totalRatings: 12 },
+                    { id: 2, userId: 3, username: 'fundi2', fullName: 'Fundi Mary', category: 'plumber', specialization: 'Pipe Installation, Water Heater, Toilet Repair', experience: 3, price: 12000, availability: 'busy', bio: 'Professional plumber, quick service. I fix all plumbing issues including pipes, water heaters, and toilets.', location: 'Dar es Salaam, Mbagala', lat: -6.8823, lng: 39.2483, rating: 4.8, totalRatings: 8 },
+                    { id: 3, userId: 4, username: 'fundi3', fullName: 'Fundi James', category: 'carpenter', specialization: 'Furniture Making, Cabinet Installation, Repair', experience: 7, price: 10000, availability: 'available', bio: 'Experienced carpenter specializing in custom furniture, cabinet installation, and furniture repair.', location: 'Dar es Salaam, Kinondoni', lat: -6.7924, lng: 39.2583, rating: 4.9, totalRatings: 15 }
+                ];
+                localStorage.setItem('fundis', JSON.stringify(fundis));
+            }
+            
+            if (bookings.length === 0) {
+                bookings = [];
+            }
+        }
+
+        // ==================== HELPER FUNCTIONS ====================
+        function showAlert(message, type) {
+            const mainContent = document.getElementById('mainContent');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
+            alertDiv.style.display = 'block';
+            
+            mainContent.insertBefore(alertDiv, mainContent.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 3000);
+        }
+
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            currentLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            };
+                            resolve(currentLocation);
+                        },
+                        (error) => {
+                            console.log('Geolocation error:', error);
+                            resolve(currentLocation);
+                        }
+                    );
+                } else {
+                    resolve(currentLocation);
+                }
+            });
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += i <= rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+            }
+            return stars;
+        }
+
+        function getCategoryName(category) {
+            const categories = {
+                electrician: '🔌 Electrician',
+                plumber: '🚰 Plumber',
+                carpenter: '🪚 Carpenter',
+                mechanic: '🔧 Mechanic',
+                painter: '🎨 Painter'
+            };
+            return categories[category] || category;
+        }
+
+        function formatPrice(price) {
+            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // ==================== NAVIGATION ====================
+        function renderNavigation() {
+            const navMenu = document.getElementById('navMenu');
+            if (!currentUser) {
+                navMenu.innerHTML = `
+                    <a onclick="showPage('home')">🏠 Home</a>
+                    <a onclick="showPage('login')">🔐 Login</a>
+                    <a onclick="showPage('register')">📝 Register</a>
+                `;
+            } else {
+                let menuItems = '';
+                if (currentUser.type === 'customer') {
+                    menuItems = `
+                        <a onclick="showPage('customerDashboard')">📊 Dashboard</a>
+                        <a onclick="showPage('findFundis')">🔍 Find Fundis</a>
+                        <a onclick="showPage('myBookings')">📅 My Bookings</a>
+                    `;
+                } else if (currentUser.type === 'fundi') {
+                    menuItems = `
+                        <a onclick="showPage('fundiDashboard')">📊 Dashboard</a>
+                        <a onclick="showPage('fundiRequests')">📨 Requests</a>
+                        <a onclick="showPage('myJobs')">💼 My Jobs</a>
+                        <a onclick="showPage('fundiProfile')">👤 My Profile</a>
+                    `;
+                } else if (currentUser.type === 'admin') {
+                    menuItems = `
+                        <a onclick="showPage('adminDashboard')">📊 Dashboard</a>
+                        <a onclick="showPage('manageUsers')">👥 Users</a>
+                        <a onclick="showPage('manageFundis')">🔧 Fundis</a>
+                        <a onclick="showPage('manageBookings')">📋 Bookings</a>
+                    `;
+                }
+                navMenu.innerHTML = `
+                    ${menuItems}
+                    <span style="color:#667eea;">👋 ${currentUser.fullName} (${currentUser.type})</span>
+                    <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                `;
+            }
+        }
+
+        // ==================== PAGE RENDERING ====================
+        function showPage(page) {
+            const mainContent = document.getElementById('mainContent');
+            
+            const pages = {
+                home: () => renderHome(),
+                login: () => renderLogin(),
+                register: () => renderRegister(),
+                customerDashboard: () => renderCustomerDashboard(),
+                findFundis: () => renderFindFundis(),
+                myBookings: () => renderMyBookings(),
+                fundiDashboard: () => renderFundiDashboard(),
+                fundiRequests: () => renderFundiRequests(),
+                myJobs: () => renderMyJobs(),
+                fundiProfile: () => renderFundiProfile(),
+                adminDashboard: () => renderAdminDashboard(),
+                manageUsers: () => renderManageUsers(),
+                manageFundis: () => renderManageFundis(),
+                manageBookings: () => renderManageBookings()
+            };
+            
+            if (pages[page]) {
+                mainContent.innerHTML = pages[page]();
+                if (page === 'findFundis') loadFundisMap();
+                if (page === 'register') initRegisterMap();
+            }
+        }
+
+        // ==================== HOME PAGE ====================
+        function renderHome() {
+            return `
+                <div class="hero">
+                    <h1><i class="fas fa-tools"></i> Local Fundi System</h1>
+                    <p>Find trusted professionals near you for all your home service needs</p>
+                    <div class="cta-buttons" style="margin-top: 20px;">
+                        ${!currentUser ? `
+                            <button class="btn btn-primary btn-large" onclick="showPage('register')">Get Started</button>
+                            <button class="btn btn-success btn-large" onclick="showPage('login')">Login</button>
+                        ` : `
+                            <button class="btn btn-primary btn-large" onclick="showPage('findFundis')">Find Fundis</button>
+                        `}
+                    </div>
+                </div>
+                <div class="container">
+                    <div class="features-grid">
+                        <div class="feature"><i class="fas fa-map-marker-alt"></i><h3>Location Based</h3><p>Find fundis near your location</p></div>
+                        <div class="feature"><i class="fas fa-search"></i><h3>Easy Search</h3><p>Search by category and location</p></div>
+                        <div class="feature"><i class="fas fa-calendar-check"></i><h3>Easy Booking</h3><p>Book services at your preferred time</p></div>
+                        <div class="feature"><i class="fas fa-star"></i><h3>Ratings & Reviews</h3><p>See verified ratings from others</p></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== LOGIN PAGE ====================
+        function renderLogin() {
+            return `
+                <div class="auth-card">
+                    <h2><i class="fas fa-tools"></i> Local Fundi System</h2>
+                    <h3>Login to Your Account</h3>
+                    <form id="loginForm">
+                        <div class="form-group"><label>Username</label><input type="text" id="loginUsername" required></div>
+                        <div class="form-group"><label>Password</label><input type="password" id="loginPassword" required></div>
+                        <button type="submit" class="btn btn-primary" style="width:100%">Login</button>
+                    </form>
+                    <p style="text-align:center; margin-top:20px;">Don't have an account? <a onclick="showPage('register')">Register here</a></p>
+                    <p style="text-align:center; margin-top:10px; font-size:12px; color:#718096;">Demo: customer/123 | fundi1/123 | admin/123</p>
+                </div>
+            `;
+        }
+
+        // ==================== REGISTER PAGE WITH MAP ====================
+        function renderRegister() {
+            return `
+                <div class="auth-card">
+                    <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+                    <form id="registerForm">
+                        <div class="form-group"><label>User Type</label>
+                            <select id="regUserType" onchange="toggleFundiFields()">
+                                <option value="customer">Customer</option>
+                                <option value="fundi">Fundi (Service Provider)</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Full Name</label><input type="text" id="regFullName" required></div>
+                            <div class="form-group"><label>Username</label><input type="text" id="regUsername" required></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Email</label><input type="email" id="regEmail" required></div>
+                            <div class="form-group"><label>Phone</label><input type="tel" id="regPhone" required></div>
+                        </div>
+                        <div class="form-group"><label>Location</label><input type="text" id="regLocation" placeholder="Select location on map" required></div>
+                        <div class="form-group"><div id="registerMap" style="height: 300px; border-radius: 10px;"></div>
+                            <button type="button" class="location-btn" onclick="getCurrentLocationForRegister()"><i class="fas fa-location-dot"></i> Use My Current Location</button>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Password</label><input type="password" id="regPassword" required></div>
+                            <div class="form-group"><label>Confirm Password</label><input type="password" id="regConfirmPassword" required></div>
+                        </div>
+                        <div id="fundiFields" style="display:none;">
+                            <h4>Fundi Details</h4>
+                            <div class="form-row">
+                                <div class="form-group"><label>Category</label>
+                                    <select id="regCategory">
+                                        <option value="electrician">🔌 Electrician</option>
+                                        <option value="plumber">🚰 Plumber</option>
+                                        <option value="carpenter">🪚 Carpenter</option>
+                                        <option value="mechanic">🔧 Mechanic</option>
+                                        <option value="painter">🎨 Painter</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>Specialization</label><input type="text" id="regSpecialization" placeholder="e.g., House Wiring"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Years Experience</label><input type="number" id="regExperience" value="0"></div>
+                                <div class="form-group"><label>Price per Hour (TZS)</label><input type="number" id="regPrice" value="10000"></div>
+                            </div>
+                            <div class="form-group"><label>Bio / Description</label><textarea id="regBio" rows="3" placeholder="Describe your skills and experience..."></textarea></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%">Register</button>
+                    </form>
+                    <p style="text-align:center; margin-top:20px;">Already have an account? <a onclick="showPage('login')">Login here</a></p>
+                </div>
+            `;
+        }
+
+        let registerMap, registerMarker;
+        
+        function initRegisterMap() {
+            setTimeout(() => {
+                const mapDiv = document.getElementById('registerMap');
+                if (mapDiv && !registerMap) {
+                    registerMap = L.map('registerMap').setView([currentLocation.lat, currentLocation.lng], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(registerMap);
+                    
+                    registerMarker = L.marker([currentLocation.lat, currentLocation.lng], { draggable: true }).addTo(registerMap);
+                    registerMarker.on('dragend', function(e) {
+                        const latlng = registerMarker.getLatLng();
+                        document.getElementById('regLocation').value = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
+                    });
+                    
+                    registerMap.on('click', function(e) {
+                        registerMarker.setLatLng(e.latlng);
+                        document.getElementById('regLocation').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+                    });
+                }
+            }, 100);
+        }
+
+        function getCurrentLocationForRegister() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    if (registerMap) {
+                        registerMap.setView([lat, lng], 15);
+                        registerMarker.setLatLng([lat, lng]);
+                        document.getElementById('regLocation').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    }
+                });
+            }
+        }
+
+        // ==================== CUSTOMER DASHBOARD ====================
+        function renderCustomerDashboard() {
+            const userBookings = bookings.filter(b => b.customerId === currentUser.id);
+            return `
+                <div class="container">
+                    <h2>Welcome, ${currentUser.fullName}! 👋</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card"><i class="fas fa-calendar-check"></i><h3>${userBookings.length}</h3><p>Total Bookings</p></div>
+                        <div class="stat-card"><i class="fas fa-clock"></i><h3>${userBookings.filter(b => b.status === 'pending').length}</h3><p>Pending</p></div>
+                        <div class="stat-card"><i class="fas fa-check-circle"></i><h3>${userBookings.filter(b => b.status === 'completed').length}</h3><p>Completed</p></div>
+                    </div>
+                    <div class="card"><h3>Quick Actions</h3>
+                        <button class="btn btn-primary" onclick="showPage('findFundis')"><i class="fas fa-search"></i> Find a Fundi</button>
+                        <button class="btn btn-success" onclick="showPage('myBookings')"><i class="fas fa-list"></i> View My Bookings</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== FIND FUNDIS WITH MAP ====================
+        function renderFindFundis() {
+            return `
+                <div class="container">
+                    <h2><i class="fas fa-map-marker-alt"></i> Find Fundis Near You</h2>
+                    <div class="search-section">
+                        <div class="search-bar">
+                            <input type="text" id="searchInput" placeholder="Search by name or category..." onkeyup="loadFundisMap()">
+                            <select id="categoryFilter" onchange="loadFundisMap()">
+                                <option value="">All Categories</option>
+                                <option value="electrician">🔌 Electrician</option>
+                                <option value="plumber">🚰 Plumber</option>
+                                <option value="carpenter">🪚 Carpenter</option>
+                                <option value="mechanic">🔧 Mechanic</option>
+                                <option value="painter">🎨 Painter</option>
+                            </select>
+                            <select id="distanceFilter" onchange="loadFundisMap()">
+                                <option value="0">All Distances</option>
+                                <option value="2">Within 2 km</option>
+                                <option value="5">Within 5 km</option>
+                                <option value="10">Within 10 km</option>
+                            </select>
+                            <button class="btn btn-info" onclick="getCurrentLocationAndReload()"><i class="fas fa-location-dot"></i> Near Me</button>
+                        </div>
+                        <div id="map" style="height: 400px; margin-top: 15px;"></div>
+                    </div>
+                    <div id="fundiList" class="fundi-grid"></div>
+                </div>
+            `;
+        }
+
+        let mainMap, markers = [];
+
+        async function loadFundisMap() {
+            await getCurrentLocation();
+            
+            if (!mainMap) {
+                mainMap = L.map('map').setView([currentLocation.lat, currentLocation.lng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(mainMap);
+                L.marker([currentLocation.lat, currentLocation.lng]).addTo(mainMap).bindPopup('Your Location').openPopup();
+            } else {
+                mainMap.setView([currentLocation.lat, currentLocation.lng], 13);
+            }
+            
+            markers.forEach(marker => mainMap.removeLayer(marker));
+            markers = [];
+            
+            let filteredFundis = [...fundis];
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            const category = document.getElementById('categoryFilter')?.value || '';
+            const distanceLimit = parseFloat(document.getElementById('distanceFilter')?.value || 0);
+            
+            if (searchTerm) {
+                filteredFundis = filteredFundis.filter(f => 
+                    f.fullName.toLowerCase().includes(searchTerm) || 
+                    f.category.toLowerCase().includes(searchTerm) ||
+                    f.specialization.toLowerCase().includes(searchTerm)
+                );
+            }
+            if (category) {
+                filteredFundis = filteredFundis.filter(f => f.category === category);
+            }
+            
+            const fundisWithDistance = filteredFundis.map(f => {
+                const distance = calculateDistance(currentLocation.lat, currentLocation.lng, f.lat, f.lng);
+                return { ...f, distance };
+            }).sort((a, b) => a.distance - b.distance);
+            
+            let displayFundis = fundisWithDistance;
+            if (distanceLimit > 0) {
+                displayFundis = fundisWithDistance.filter(f => f.distance <= distanceLimit);
+            }
+            
+            displayFundis.forEach(fundi => {
+                const marker = L.marker([fundi.lat, fundi.lng]).addTo(mainMap);
+                marker.bindPopup(`
+                    <b>${fundi.fullName}</b><br>
+                    ${getCategoryName(fundi.category)}<br>
+                    📍 ${fundi.distance.toFixed(1)} km away<br>
+                    💰 TZS ${formatPrice(fundi.price)}/hour<br>
+                    <button onclick="showBookingModal(${fundi.userId}, '${fundi.fullName}')" style="margin-top:5px;padding:5px 10px;background:#667eea;color:white;border:none;border-radius:3px;cursor:pointer;">Book Now</button>
+                `);
+                markers.push(marker);
+            });
+            
+            if (displayFundis.length === 0) {
+                document.getElementById('fundiList').innerHTML = '<p>No fundis found in this area.</p>';
+                return;
+            }
+            
+            document.getElementById('fundiList').innerHTML = displayFundis.map(fundi => `
+                <div class="fundi-card">
+                    <div class="fundi-header">
+                        <div class="fundi-avatar"><i class="fas fa-user"></i></div>
+                        <div class="fundi-info">
+                            <h3>${fundi.fullName} <span style="font-size:12px;">📍 ${fundi.distance.toFixed(1)} km</span></h3>
+                            <p><i class="fas fa-map-marker-alt"></i> ${fundi.location}</p>
+                            <div class="rating">${generateStars(fundi.rating)} <span>(${fundi.totalRatings} reviews)</span></div>
+                        </div>
+                    </div>
+                    <div><p><strong>${getCategoryName(fundi.category)}</strong> | ${fundi.specialization}</p>
+                    <p><i class="fas fa-clock"></i> ${fundi.experience} years exp | <i class="fas fa-money-bill"></i> TZS ${formatPrice(fundi.price)}/hour</p>
+                    <p><strong>Status:</strong> <span class="status-${fundi.availability}">${fundi.availability.toUpperCase()}</span></p>
+                    <p>${fundi.bio.substring(0, 100)}...</p></div>
+                    <button class="btn btn-primary" onclick="showBookingModal(${fundi.userId}, '${fundi.fullName}')"><i class="fas fa-calendar-check"></i> Book Now</button>
+                </div>
+            `).join('');
+        }
+
+        async function getCurrentLocationAndReload() {
+            await getCurrentLocation();
+            loadFundisMap();
+        }
+
+        // ==================== BOOKING MODAL ====================
+        function showBookingModal(fundiId, fundiName) {
+            let modal = document.getElementById('bookingModal');
+            if (!modal) {
+                const modalHtml = `
+                    <div id="bookingModal" class="modal">
+                        <div class="modal-content">
+                            <span class="close" onclick="closeModal()">&times;</span>
+                            <h3>Book Service</h3>
+                            <form id="bookingForm">
+                                <input type="hidden" id="bookingFundiId">
+                                <div class="form-group"><label>Fundi</label><input type="text" id="bookingFundiName" readonly></div>
+                                <div class="form-group"><label>Service Date</label><input type="date" id="bookingDate" required min="${new Date().toISOString().split('T')[0]}"></div>
+                                <div class="form-group"><label>Service Time</label><input type="time" id="bookingTime" required></div>
+                                <div class="form-group"><label>Description</label><textarea id="bookingDescription" rows="3" placeholder="Describe what needs to be done..." required></textarea></div>
+                                <button type="submit" class="btn btn-primary">Send Request</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                document.getElementById('bookingForm').addEventListener('submit', submitBooking);
+            }
+            document.getElementById('bookingFundiId').value = fundiId;
+            document.getElementById('bookingFundiName').value = fundiName;
+            document.getElementById('bookingModal').style.display = 'block';
+        }
+
+        function submitBooking(e) {
+            e.preventDefault();
+            const fundiId = parseInt(document.getElementById('bookingFundiId').value);
+            const date = document.getElementById('bookingDate').value;
+            const time = document.getElementById('bookingTime').value;
+            const description = document.getElementById('bookingDescription').value;
+            const fundiData = fundis.find(f => f.userId === fundiId);
+            
+            const newBooking = {
+                id: bookings.length + 1,
+                customerId: currentUser.id,
+                customerName: currentUser.fullName,
+                fundiId: fundiId,
+                fundiName: fundiData?.fullName,
+                date: date,
+                time: time,
+                description: description,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+            
+            bookings.push(newBooking);
+            localStorage.setItem('bookings', JSON.stringify(bookings));
+            closeModal();
+            showAlert('Booking request sent successfully!', 'success');
+            showPage('myBookings');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('bookingModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // ==================== MY BOOKINGS ====================
+        function renderMyBookings() {
+            const userBookings = bookings.filter(b => b.customerId === currentUser.id);
+            if (userBookings.length === 0) {
+                return `<div class="container"><div class="card"><p>You haven't made any bookings yet.</p><button class="btn btn-primary" onclick="showPage('findFundis')">Find a Fundi</button></div></div>`;
+            }
+            return `<div class="container"><h2>My Bookings</h2>${userBookings.map(booking => `
+                <div class="card"><div class="fundi-header"><div class="fundi-avatar"><i class="fas fa-user"></i></div>
+                <div class="fundi-info"><h3>${booking.fundiName}</h3><p><i class="fas fa-calendar"></i> ${booking.date} at ${booking.time}</p></div>
+                <span class="badge badge-${booking.status}">${booking.status.toUpperCase()}</span></div>
+                <p><strong>Description:</strong> ${booking.description}</p>
+                ${booking.status === 'completed' && !ratings.find(r => r.bookingId === booking.id) ? 
+                    `<button class="btn btn-primary" onclick="rateBooking(${booking.id}, ${booking.fundiId})">Rate & Review</button>` : ''}
+                </div>`).join('')}</div>`;
+        }
+
+        // ==================== FUNDI DASHBOARD ====================
+        function renderFundiDashboard() {
+            const fundiData = fundis.find(f => f.userId === currentUser.id);
+            const fundiBookings = bookings.filter(b => b.fundiId === currentUser.id);
+            return `<div class="container"><h2>Welcome, ${currentUser.fullName}! 🔧</h2>
+                <div class="stats-grid"><div class="stat-card"><i class="fas fa-bell"></i><h3>${fundiBookings.filter(b => b.status === 'pending').length}</h3><p>Pending</p></div>
+                <div class="stat-card"><i class="fas fa-briefcase"></i><h3>${fundiBookings.filter(b => b.status === 'accepted').length}</h3><p>Active</p></div>
+                <div class="stat-card"><i class="fas fa-star"></i><h3>${fundiData?.rating || 0}</h3><p>Rating</p></div></div>
+                <div class="card"><h3>Quick Actions</h3><button class="btn btn-primary" onclick="showPage('fundiRequests')">View Requests</button>
+                <button class="btn btn-success" onclick="showPage('myJobs')">My Jobs</button>
+                <button class="btn btn-info" onclick="updateAvailability()">Update Status</button></div></div>`;
+        }
+
+        function updateAvailability() {
+            const newStatus = prompt('Set availability (available/busy/offline):', 'available');
+            if (newStatus && ['available', 'busy', 'offline'].includes(newStatus)) {
+                const fundiIndex = fundis.findIndex(f => f.userId === currentUser.id);
+                if (fundiIndex !== -1) {
+                    fundis[fundiIndex].availability = newStatus;
+                    localStorage.setItem('fundis', JSON.stringify(fundis));
+                    showAlert(`Status updated to ${newStatus}`, 'success');
+                }
+            }
+        }
+
+        function renderFundiRequests() {
+            const pending = bookings.filter(b => b.fundiId === currentUser.id && b.status === 'pending');
+            if (pending.length === 0) return `<div class="container"><div class="card"><p>No pending requests.</p></div></div>`;
+            return `<div class="container"><h2>Pending Requests</h2>${pending.map(req => `
+                <div class="card"><h3>From: ${req.customerName}</h3><p><i class="fas fa-calendar"></i> ${req.date} at ${req.time}</p>
+                <p>${req.description}</p><button class="btn btn-success" onclick="updateBookingStatus(${req.id}, 'accepted')">Accept</button>
+                <button class="btn btn-danger" onclick="updateBookingStatus(${req.id}, 'rejected')">Reject</button></div>`).join('')}</div>`;
+        }
+
+        function renderMyJobs() {
+            const active = bookings.filter(b => b.fundiId === currentUser.id && b.status === 'accepted');
+            if (active.length === 0) return `<div class="container"><div class="card"><p>No active jobs.</p></div></div>`;
+            return `<div class="container"><h2>My Jobs</h2>${active.map(job => `
+                <div class="card"><h3>Customer: ${job.customerName}</h3><p><i class="fas fa-calendar"></i> ${job.date} at ${job.time}</p>
+                <p>${job.description}</p><button class="btn btn-primary" onclick="updateBookingStatus(${job.id}, 'completed')">Mark Completed</button></div>`).join('')}</div>`;
+        }
+
+        function renderFundiProfile() {
+            const fundiData = fundis.find(f => f.userId === currentUser.id);
+            return `<div class="container"><div class="card"><h2>My Profile</h2>
+                <p><strong>Name:</strong> ${fundiData.fullName}</p>
+                <p><strong>Category:</strong> ${getCategoryName(fundiData.category)}</p>
+                <p><strong>Specialization:</strong> ${fundiData.specialization}</p>
+                <p><strong>Experience:</strong> ${fundiData.experience} years</p>
+                <p><strong>Price:</strong> TZS ${formatPrice(fundiData.price)}/hour</p>
+                <p><strong>Location:</strong> ${fundiData.location}</p>
+                <p><strong>Rating:</strong> ${fundiData.rating} ⭐ (${fundiData.totalRatings} reviews)</p>
+                <p><strong>Bio:</strong> ${fundiData.bio}</p></div></div>`;
+        }
+
+        // ==================== ADMIN DASHBOARD ====================
+        function renderAdminDashboard() {
+            return `<div class="container"><h2>Admin Dashboard</h2>
+                <div class="stats-grid"><div class="stat-card"><i class="fas fa-users"></i><h3>${users.length}</h3><p>Users</p></div>
+                <div class="stat-card"><i class="fas fa-user-cog"></i><h3>${fundis.length}</h3><p>Fundis</p></div>
+                <div class="stat-card"><i class="fas fa-calendar-check"></i><h3>${bookings.length}</h3><p>Bookings</p></div></div>
+                <div class="card"><h3>Quick Actions</h3><button class="btn btn-primary" onclick="showPage('manageUsers')">Manage Users</button>
+                <button class="btn btn-success" onclick="showPage('manageFundis')">Manage Fundis</button>
+                <button class="btn btn-info" onclick="showPage('manageBookings')">Manage Bookings</button></div></div>`;
+        }
+
+        function renderManageUsers() {
+            return `<div class="container"><h2>Manage Users</h2><div class="table-container"><table><thead><tr><th>ID</th><th>Username</th><th>Full Name</th><th>Email</th><th>Phone</th><th>Type</th><th>Actions</th></tr></thead>
+                <tbody>${users.map(user => `<tr><td>${user.id}</td><td>${user.username}</td><td>${user.fullName}</td><td>${user.email}</td><td>${user.phone}</td>
+                <td><span class="badge badge-${user.type}">${user.type}</span></td><td><button class="btn btn-danger" onclick="deleteUser(${user.id})">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+
+        function renderManageFundis() {
+            return `<div class="container"><h2>Manage Fundis</h2><div class="table-container"><table><thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Experience</th><th>Price</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>${fundis.map(fundi => `<tr><td>${fundi.id}</td><td>${fundi.fullName}</td><td>${fundi.category}</td><td>${fundi.experience} yrs</td>
+                <td>TZS ${formatPrice(fundi.price)}</td><td>${fundi.rating}</td><td><span class="status-${fundi.availability}">${fundi.availability}</span></td>
+                <td><button class="btn btn-danger" onclick="deleteFundi(${fundi.userId})">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+
+        function renderManageBookings() {
+            return `<div class="container"><h2>Manage Bookings</h2><div class="table-container"><table><thead><tr><th>ID</th><th>Customer</th><th>Fundi</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>${bookings.map(booking => `<tr><td>${booking.id}</td><td>${booking.customerName}</td><td>${booking.fundiName}</td>
+                <td>${booking.date}</td><td>${booking.time}</td><td><span class="badge badge-${booking.status}">${booking.status}</span></td>
+                <td><button class="btn btn-danger" onclick="deleteBooking(${booking.id})">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+
+        // ==================== ACTION FUNCTIONS ====================
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                renderNavigation();
+                showAlert('Login successful!', 'success');
+                showPage(user.type === 'customer' ? 'customerDashboard' : user.type === 'fundi' ? 'fundiDashboard' : 'adminDashboard');
+            } else {
+                showAlert('Invalid username or password!', 'error');
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const userType = document.getElementById('regUserType').value;
+            const fullName = document.getElementById('regFullName').value;
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const phone = document.getElementById('regPhone').value;
+            const location = document.getElementById('regLocation').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match!', 'error');
+                return;
+            }
+            if (users.find(u => u.username === username)) {
+                showAlert('Username already exists!', 'error');
+                return;
+            }
+            
+            let lat = currentLocation.lat, lng = currentLocation.lng;
+            if (registerMarker) {
+                const pos = registerMarker.getLatLng();
+                lat = pos.lat;
+                lng = pos.lng;
+            }
+            
+            const newUser = { id: users.length + 1, username, password, fullName, email, phone, location, lat, lng, type: userType };
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            if (userType === 'fundi') {
+                const category = document.getElementById('regCategory').value;
+                const specialization = document.getElementById('regSpecialization').value;
+                const experience = parseInt(document.getElementById('regExperience').value) || 0;
+                const price = parseInt(document.getElementById('regPrice').value) || 10000;
+                const bio = document.getElementById('regBio').value || 'Professional service provider';
+                
+                const newFundi = { id: fundis.length + 1, userId: newUser.id, username, fullName, category, specialization, experience, price, availability: 'available', bio, location, lat, lng, rating: 0, totalRatings: 0 };
+                fundis.push(newFundi);
+                localStorage.setItem('fundis', JSON.stringify(fundis));
+            }
+            
+            showAlert('Registration successful! Please login.', 'success');
+            showPage('login');
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            renderNavigation();
+            showPage('home');
+            showAlert('Logged out successfully!', 'success');
+        }
+
+        function toggleFundiFields() {
+            const userType = document.getElementById('regUserType').value;
+            document.getElementById('fundiFields').style.display = userType === 'fundi' ? 'block' : 'none';
+        }
+
+        function updateBookingStatus(bookingId, status) {
+            const booking = bookings.find(b => b.id === bookingId);
+            if (booking) {
+                booking.status = status;
+                localStorage.setItem('bookings', JSON.stringify(bookings));
+                showAlert(`Booking ${status}!`, 'success');
+                if (currentUser.type === 'fundi') showPage('fundiDashboard');
+                else showPage('myBookings');
+            }
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Delete this user?')) {
+                users = users.filter(u => u.id !== userId);
+                fundis = fundis.filter(f => f.userId !== userId);
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('fundis', JSON.stringify(fundis));
+                showAlert('User deleted!', 'success');
+                showPage('manageUsers');
+            }
+        }
+
+        function deleteFundi(userId) {
+            if (confirm('Delete this fundi?')) {
+                const user = users.find(u => u.id === userId);
+                if (user) users = users.filter(u => u.id !== userId);
+                fundis = fundis.filter(f => f.userId !== userId);
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('fundis', JSON.stringify(fundis));
+                showAlert('Fundi deleted!', 'success');
+                showPage('manageFundis');
+            }
+        }
+
+        function deleteBooking(bookingId) {
+            if (confirm('Delete this booking?')) {
+                bookings = bookings.filter(b => b.id !== bookingId);
+                localStorage.setItem('bookings', JSON.stringify(bookings));
+                showAlert('Booking deleted!', 'success');
+                showPage('manageBookings');
+            }
+        }
+
+        function rateBooking(bookingId, fundiId) {
+            const rating = prompt('Rate this fundi (1-5):', '5');
+            const comment = prompt('Leave a review:', '');
+            if (rating && rating >= 1 && rating <= 5) {
+                ratings.push({ id: ratings.length + 1, bookingId, fundiId, rating: parseInt(rating), comment });
+                localStorage.setItem('ratings', JSON.stringify(ratings));
+                const fundiRatings = ratings.filter(r => r.fundiId === fundiId);
+                const avgRating = fundiRatings.reduce((sum, r) => sum + r.rating, 0) / fundiRatings.length;
+                const fundiIndex = fundis.findIndex(f => f.userId === fundiId);
+                if (fundiIndex !== -1) {
+                    fundis[fundiIndex].rating = parseFloat(avgRating.toFixed(1));
+                    fundis[fundiIndex].totalRatings = fundiRatings.length;
+                    localStorage.setItem('fundis', JSON.stringify(fundis));
+                }
+                showAlert('Thank you for rating!', 'success');
+                showPage('myBookings');
+            }
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        function setupEventListeners() {
+            document.addEventListener('submit', (e) => {
+                if (e.target.id === 'loginForm') { e.preventDefault(); handleLogin(e); }
+                if (e.target.id === 'registerForm') { e.preventDefault(); handleRegister(e); }
+            });
+        }
+
+        // ==================== INITIALIZE ====================
+        function init() {
+            initDemoData();
+            renderNavigation();
+            showPage('home');
+            setupEventListeners();
+        }
+
+        window.showPage = showPage;
+        window.logout = logout;
+        window.toggleFundiFields = toggleFundiFields;
+        window.showBookingModal = showBookingModal;
+        window.closeModal = closeModal;
+        window.loadFundisMap = loadFundisMap;
+        window.getCurrentLocationAndReload = getCurrentLocationAndReload;
+        window.updateBookingStatus = updateBookingStatus;
+        window.deleteUser = deleteUser;
+        window.deleteFundi = deleteFundi;
+        window.deleteBooking = deleteBooking;
+        window.rateBooking = rateBooking;
+        window.updateAvailability = updateAvailability;
+        window.initRegisterMap = initRegisterMap;
+        window.getCurrentLocationForRegister = getCurrentLocationForRegister;
+
+        init();
+    </script>
+</body>
+</html>
